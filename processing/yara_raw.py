@@ -26,13 +26,18 @@ class YaraRaw(ProcessingModule):
     def each(self, target):
         
         scan_proc = subprocess.Popen(
-            [self.bin_path, self.compiled_rules, target], stdout=subprocess.PIPE)
-        output = scan_proc.communicate()[0]
+            [self.bin_path, self.compiled_rules, target],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        stdout, stderr = scan_proc.communicate()
 
-        if len(output) == 0:
+        if scan_proc.returncode != 0:
+            self.log("error", "There was an error executing Yara: {}".format(stderr))
+
+        if len(stdout) == 0:
             return False
 
-        lines = output.strip().split('\n')
+        lines = stdout.strip().split('\n')
 
         for line in lines:
             rule = line.split()[0]
