@@ -22,13 +22,35 @@ class YaraRaw(ProcessingModule):
         },
     ]
 
+    def get_yara_version(self):
+
+        scan_proc = subprocess.Popen(
+            [self.bin_path, "-v"],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        stdout, stderr = scan_proc.communicate()
+
+        if scan_proc.returncode != 0:
+            self.log("error", "Error getting Yara version: {}".format(stderr))
+
+        version_str = stdout.strip()
+        # Split after 2nd dot
+        version_str = ".".join(version_str.split(".", 2)[:2])
+        version_float = float(version_str)
+
+        return version_float
 
     def each(self, target):
         
+        yara_version = self.get_yara_version()
+
+        if yara_version >= 3.9:
+            args = [self.bin_path, "-C", self.compiled_rules, target]
+        else:
+            args = [self.bin_path, self.compiled_rules, target]
+
         scan_proc = subprocess.Popen(
-            [self.bin_path, self.compiled_rules, target],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
+            args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = scan_proc.communicate()
 
         if scan_proc.returncode != 0:
