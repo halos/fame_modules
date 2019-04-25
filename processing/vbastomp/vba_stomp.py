@@ -20,7 +20,7 @@ else:
 class VbaStomp(ProcessingModule):
     name = "vba_stomp"
     description = "Detects VBA stomping and similar anomalies in documents with VBA code."
-    acts_on = ["word", "html", "excel", "powerpoint"]
+    acts_on = ["word", "excel"]
 
     config = [
         {
