@@ -1,4 +1,5 @@
 import os
+import subprocess
 from fame.core.module import ProcessingModule
 from fame.common.exceptions import ModuleInitializationError
 from distutils.spawn import find_executable
@@ -18,7 +19,7 @@ else:
 
 class VbaStomp(ProcessingModule):
     name = "vba_stomp"
-    description = "Detects anomalies inside documents with VBA code."
+    description = "Detects VBA stomping and similar anomalies in documents with VBA code."
     acts_on = ["word", "html", "excel", "powerpoint"]
 
     config = [
@@ -44,7 +45,7 @@ class VbaStomp(ProcessingModule):
     def each(self, target):
 
         self.results = {
-            'exit_code': 0,
+            'warning': False,
             'output': u''
         }
 
@@ -53,10 +54,18 @@ class VbaStomp(ProcessingModule):
             stdout=subprocess.PIPE,
             env=dict(os.environ, PCODEDMP_DIR=self.pcodedmp_dir)
         )
-        if scan_proc.returncode == 0:
-            return False
+        
+        output = scan_proc.communicate()[0]
 
-        self.results["exit_code"] = scan_proc.returncode
-        self.results["output"] = scan_proc.communicate()
+        if output.startswith("ERROR:") or output.startswith("WARNING:"):
+            self.results["warning"] = True
 
-        return True
+        elif scan_proc.returncode != 0:
+            self.results["warning"] = True
+            output = "ERROR: Unexpected output: " + output
+
+        # replace full path
+        output = output.replace(target, os.path.basename(target))
+        self.results["output"] = output
+
+        return self.results["warning"]
