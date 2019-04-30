@@ -10,9 +10,9 @@ class YaraPdfFilter(ProcessingModule):
 
     config = [
         {
-            'name': 'pdf_filter_path',
+            'name': 'pdf_parser_path',
             'type': 'str',
-            'description': 'pdf-filter.py full script path.'
+            'description': 'pdf-parser.py full script path.'
         },
         {
             'name': 'yara_rules',
@@ -25,7 +25,7 @@ class YaraPdfFilter(ProcessingModule):
 
         match_found = False
         
-        args = [self.pdf_filter_path, "-y", self.yara_rules, target]
+        args = [self.pdf_parser_path, "-y", self.yara_rules, target]
 
         scan_proc = subprocess.Popen(
             args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
