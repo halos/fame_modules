@@ -36,9 +36,9 @@ class YaraPdfFilter(ProcessingModule):
 
         lines = stdout.strip().split('\n')
 
+        # Look for matches e.g.: "YARA rule: matched_rule_name (/path/to/rule.yar)"
         patt = r"YARA rule: (\w+) \("
         
-        # Look for matches e.g.: "YARA rule: matched_rule_name (/path/to/rule.yar)"
         for line in lines:
             if not line.startswith("YARA rule"):
                 continue
