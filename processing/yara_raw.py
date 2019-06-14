@@ -35,16 +35,16 @@ class YaraRaw(ProcessingModule):
 
         version_str = stdout.strip()
         # Split after 2nd dot
-        version_str = ".".join(version_str.split(".", 2)[:2])
-        version_float = float(version_str)
+        version, sub_version = version_str.split(".", 2)[:2]
+        version_int = int(version) * 1000 + int(sub_version)
 
-        return version_float
+        return version_int
 
     def each(self, target):
         
         yara_version = self.get_yara_version()
 
-        if yara_version >= 3.9:
+        if yara_version >= 3009:
             args = [self.bin_path, "-C", self.compiled_rules, target]
         else:
             args = [self.bin_path, self.compiled_rules, target]
