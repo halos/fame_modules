@@ -19,7 +19,8 @@ class Rar(ProcessingModule):
 
         for name in namelist:
             try:
-                filepath = rf.extract(name, tmpdir)
+                rf.extract(name, tmpdir)
+                filepath = os.path.join(tmpdir, name,)
                 if os.path.isfile(filepath):
                     self.add_extracted_file(filepath)
             except RuntimeError:
