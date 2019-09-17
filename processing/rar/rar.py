@@ -8,7 +8,7 @@ from fame.common.utils import tempdir
 class Rar(ProcessingModule):
     name = "rar"
     description = "Extract files from RAR archive."
-    acts_on = "rar"
+    acts_on = "application/x-rar"
 
     def each(self, target):
         tmpdir = tempdir()
