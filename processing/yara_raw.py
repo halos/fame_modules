@@ -1,4 +1,6 @@
 import os
+import re
+import hexdump
 import subprocess
 
 from fame.core.module import ProcessingModule
@@ -40,6 +42,23 @@ class YaraRaw(ProcessingModule):
 
         return version_int
 
+    def show_hexdump(self, target, output):
+
+        patt_full_rule = r"(?P<rule>\w+?) (?:.+?)\n(?P<matches>(?:(?:0x[0-9a-fA-F]+?):\$(?:.*?): (?:.*?)(?:\n|$))+)"
+        patt_condition = r"(?:(0x.*?):\$(.*?): .*?(?:\n|$))+?"
+
+        for rule_name, conditions in re.findall(patt_full_rule, output):
+            self.log("WARNING", "rule: {}".format(rule_name))
+            for offset, condition in re.findall(patt_condition, conditions):
+                self.log("WARNING", "condition: {} @ {}".format(condition, offset))
+                with open(target, "rb") as fd:
+                    offset = int(offset, 16)
+                    offset = max(offset-32, 0)
+
+                    fd.seek(offset, 0)
+                    buff = fd.read(16*5)
+                    self.log("WARNING", "hexdump: {}".format(hexdump.hexdump(buff, result="return")))
+
     def each(self, target):
         
         yara_version = self.get_yara_version()
@@ -59,6 +78,8 @@ class YaraRaw(ProcessingModule):
 
         if len(stdout) == 0:
             return False
+
+        self.show_hexdump(target, stdout)
 
         lines = stdout.strip().split('\n')
 
