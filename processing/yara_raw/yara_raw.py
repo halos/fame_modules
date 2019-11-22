@@ -1,4 +1,6 @@
 import os
+import re
+import hexdump
 import subprocess
 
 from fame.core.module import ProcessingModule
@@ -40,15 +42,37 @@ class YaraRaw(ProcessingModule):
 
         return version_int
 
+    def show_hexdump(self, target, output):
+
+        matches = {}
+        patt_full_rule = r"(?P<rule>\w+?) (?:.+?)\n(?P<matches>(?:(?:0x[0-9a-fA-F]+?):\$(?:.*?): (?:.*?)(?:\n|$))+)"
+        patt_condition = r"(?:(0x.*?):\$(.*?): .*?(?:\n|$))+?"
+
+        for rule_name, conditions in re.findall(patt_full_rule, output):    
+            matches[rule_name] = []
+            
+            for offset_str, condition in re.findall(patt_condition, conditions):
+                with open(target, "rb") as fd:
+                    offset = int(offset_str, 16)
+                    offset = max(offset-32, 0)
+
+                    fd.seek(offset, 0)
+                    buff = fd.read(16*5)
+                    hex_str = hexdump.hexdump(buff, result="return")
+                    matches[rule_name].append((condition, offset_str, hex_str))
+
+        return matches
+
     def each(self, target):
         
+        self.results = {}
         yara_version = self.get_yara_version()
 
         # version > 3.9
         if yara_version >= 3009:
-            args = [self.bin_path, "-C", self.compiled_rules, target]
+            args = [self.bin_path, "-s", "-C", self.compiled_rules, target]
         else:
-            args = [self.bin_path, self.compiled_rules, target]
+            args = [self.bin_path, "-s", self.compiled_rules, target]
 
         scan_proc = subprocess.Popen(
             args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -60,10 +84,10 @@ class YaraRaw(ProcessingModule):
         if len(stdout) == 0:
             return False
 
-        lines = stdout.strip().split('\n')
+        matches = self.show_hexdump(target, stdout)
+        self.results["matches"] = matches
 
-        for line in lines:
-            rule = line.split()[0]
+        for rule in matches.keys():
             self.add_tag(rule)
 
         return True
