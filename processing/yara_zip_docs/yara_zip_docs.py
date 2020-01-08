@@ -7,8 +7,8 @@ from zipfile import ZipFile, is_zipfile
 from fame.core.module import ProcessingModule
 from fame.common.utils import tempdir
 
-class ZippedDocuments(ProcessingModule):
-    name = "zipped_documents"
+class YaraZippedDocuments(ProcessingModule):
+    name = "yara_zip_docs"
     description = "Look for Yara patterns inside zipped documents like docx or odt."
     acts_on = "word, excel, application/vnd.oasis.opendocument.text"
 
