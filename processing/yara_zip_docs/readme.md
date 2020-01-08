@@ -1,5 +1,5 @@
 
-# Ziped documents
+# Yara zipped documents
 
 Module to look for YARA patterns inside zompressed documents like DOCX, XLSX or ODT compressed documents. It extracts `.xml` and `.rels` files and applies given compiled yara file to them.
 
