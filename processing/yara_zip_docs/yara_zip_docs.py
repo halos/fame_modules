@@ -81,6 +81,7 @@ class YaraZippedDocuments(ProcessingModule):
 
         if scan_proc.returncode != 0:
             self.log("error", "There was an error executing Yara: {}".format(stderr))
+            return False
 
         if len(stdout) == 0:
             return False
@@ -94,6 +95,8 @@ class YaraZippedDocuments(ProcessingModule):
         return True
 
     def each(self, target):
+
+        found_sigs = False
 
         if not is_zipfile(target):
             self.log("warning", "Document is not ZIP compressed")
@@ -115,6 +118,6 @@ class YaraZippedDocuments(ProcessingModule):
         for zipped_name in files_to_analyze:
             filepath = zf.extract(zipped_name, tmpdir)
             if os.path.isfile(filepath):
-                self.look_for_yaras(filepath, zipped_name)
+                found_sigs |= self.look_for_yaras(filepath, zipped_name)
 
-        return True
+        return found_sigs
