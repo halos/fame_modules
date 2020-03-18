@@ -110,8 +110,8 @@ class YaraZippedDocuments(ProcessingModule):
         namelist = zf.namelist()
 
         for zipped_name in namelist:
-            for ext in [".rels", ".xml", ".bin"]:
-                if ext in zipped_name:
+            for sub_str in [".rels", ".xml", ".bin", "ole"]:
+                if sub_str in zipped_name.lower():
                     files_to_analyze.append(zipped_name)
                     break
 
