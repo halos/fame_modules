@@ -1,5 +1,6 @@
 import os
 import re
+import shutil
 import hexdump
 import subprocess
 from zipfile import ZipFile, is_zipfile
@@ -96,28 +97,39 @@ class YaraZippedDocuments(ProcessingModule):
 
     def each(self, target):
 
+        tmpdir = ""
         found_sigs = False
 
-        if not is_zipfile(target):
-            self.log("warning", "Document is not ZIP compressed")
-            return False
+        try:
 
-        self.results = {"matches": {}}
-        files_to_analyze = []
-        tmpdir = tempdir()
+            if not is_zipfile(target):
+                self.log("warning", "Document is not ZIP compressed")
+                return False
 
-        zf = ZipFile(target)
-        namelist = zf.namelist()
+            self.results = {"matches": {}}
+            files_to_analyze = []
+            tmpdir = tempdir()
 
-        for zipped_name in namelist:
-            for sub_str in [".rels", ".xml", ".bin", "ole", "obj"]:
-                if sub_str in zipped_name.lower():
-                    files_to_analyze.append(zipped_name)
-                    break
+            zf = ZipFile(target)
+            namelist = zf.namelist()
 
-        for zipped_name in files_to_analyze:
-            filepath = zf.extract(zipped_name, tmpdir)
-            if os.path.isfile(filepath):
-                found_sigs |= self.look_for_yaras(filepath, zipped_name)
+            for zipped_name in namelist:
+                for sub_str in [".rels", ".xml", ".bin", "ole", "obj"]:
+                    if sub_str in zipped_name.lower():
+                        files_to_analyze.append(zipped_name)
+                        break
 
-        return found_sigs
+            for zipped_name in files_to_analyze:
+                filepath = zf.extract(zipped_name, tmpdir)
+                if os.path.isfile(filepath):
+                    found_sigs |= self.look_for_yaras(filepath, zipped_name)
+        
+        except Exception as why:
+            self.log("error", "Unexpected exception: {}".format(why))
+
+        finally:
+
+            if os.path.exists(tmpdir):
+                shutil.rmtree(tmpdir)
+
+            return found_sigs
